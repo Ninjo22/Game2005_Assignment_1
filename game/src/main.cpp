@@ -34,14 +34,6 @@ public:
     float radius = 10.0f;
 };
 
-bool IsOverlapping(PhysicsBody a, PhysicsBody b)
-{
-    Vector2 disp = b.position - a.position;
-    float dist = Vector2Length(disp);
-    float sumRadius = a.radius + b.radius;
-    return dist < sumRadius;
-}
-
 //Class that containts global properties of the physics simulation
 class PhysicsSimulation
 {
@@ -49,24 +41,6 @@ public:
     std::vector<PhysicsBody> bodies;
     Vector2 gravity = Vector2{ 0, 200 };
     const float FIXED_DELTA_TIME = 1.0f / TARGET_FPS;
-    void checkCollisions()
-    {
-        for (int i = 0; i < bodies.size(); i++)
-        {
-            bodies[i].color = GREEN;
-        }
-        for (int i = 0; i < bodies.size(); i++)
-        {
-            for (int j = i + 1; j < bodies.size(); j++)
-            {
-                if (IsOverlapping(bodies[i], bodies[j]))
-                {
-                    bodies[i].color = RED;
-                    bodies[j].color = RED;
-                }
-            }
-        }
-    }
     void Update()
     {
         //Update Positions
@@ -81,8 +55,6 @@ public:
             bodies[i].velocity *= 1.0f - FIXED_DELTA_TIME;
 
         }
-
-        checkCollisions();
     }
 
     void Draw()
@@ -98,24 +70,24 @@ public:
         bodies.push_back(body);
     }
 
-    //private:
-        //std::vector<PhysicsBody> bodies;
 };
-
-//PhysicsBody bird;
+//PhysicsBody;
 PhysicsSimulation sim;
+
+//Define the struct to hold all the recored values per Part A requirements
+struct TestRecord
+{
+    double angle;
+    double Range;
+    double time;
+
+};
 
 int main()
 {
-    InitWindow(screenWidth, screenHeight, "Physics-1");
+	InitWindow(screenWidth, screenHeight, "Physics-Assignment-1");
     SetTargetFPS(TARGET_FPS);
 
-
-    PhysicsBody target;
-    target.radius = 50;
-    target.position = { 900, (float)(screenHeight - 200) };
-    target.gravityScale = 0.0f;
-    sim.AddBody(target);
 
     launchposition = { 30, (float)(screenHeight - 50) };
 
@@ -132,6 +104,35 @@ int main()
         DrawCircleV(launchposition, 5, BROWN);
         DrawLineEx(launchposition, launchposition + velocityPreview, 1, RED);
 
+        //Math for Part A
+        const double vi = 120.0; //Initial velocity
+        const double g = 20.0; //Gravity  
+        double ranges[10] = { 0.0, 80.0, 160.0, 240.0, 320.0, 400.0, 480.0, 560.0, 640.0, 720.0 };
+        //All provided ranges for each testrun
+
+
+        std::vector<TestRecord> inputRecords(10);
+        std::vector<TestRecord> outputRecords(10);
+
+        for (int i = 0; i < 10; i++)
+        {
+            // Calculate launch angle from range: theta = 0.5 * arcsin((R * g) / (vi^2))
+            double ratio = (ranges[i] * g) / (vi * vi);
+            if (ratio > 1.0) ratio = 1.0; // safety clamp
+            double angleRad = 0.5 * asin(ratio);
+
+            inputRecords[i].angle = angleRad;
+
+            // Calculate theoretical input range and flight-time using formulas
+            inputRecords[i].time = (2.0 * vi * sin(angleRad)) / g;
+            inputRecords[i].Range = (vi * vi * sin(2.0 * angleRad)) / g;
+
+            //Setup output records with angles since they are the only one that will be the same across both in and output
+            outputRecords[i].angle = inputRecords[i].angle;
+            outputRecords[i].Range = 0.0;
+            outputRecords[i].time = 0.0;
+        }
+
         if (IsKeyPressed(KEY_SPACE))
         {
             PhysicsBody birdToLaunch;
@@ -146,12 +147,7 @@ int main()
 
         sim.Update();
 
-        //Draw the bird
-        //DrawCircleV(bird.position, 10, RED);
         sim.Draw();
-
-        //GuiSliderBar(Rectangle{ 60, 5, 1000, 10 }, "Time", TextFormat("%.2f", time), &time, 0, 240);
-
 
         EndDrawing();
     }
