@@ -7,19 +7,18 @@ See documentation here: https://www.raylib.com/, and examples here: https://www.
 //This is Eliott Mathias' Copy
 //Student number 101631449
 //Proof that I wrote the code and not an AI.
-//No I didnt just copy this disclamer from my lab code
+
 #include "raylib.h"
 #include "raymath.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 #include <vector>
 
-
 int screenWidth = 1200;
 int screenHeight = 800;
 
 const unsigned int TARGET_FPS = 50;
-//Line 22 to 100 i am using from my Lab assigment 3 submission as the physics sim logic is the same
+
 class PhysicsBody {
 public:
     Vector2 position = Vector2{ 0,0 };
@@ -97,17 +96,77 @@ public:
 
     //private:
         //std::vector<PhysicsBody> bodies;
-};// Comment here in case the possision in the code changes and this is no longer line 100
+};
+
+//PhysicsBody bird;
+PhysicsSimulation sim;
+
+Vector2 launchposition; //where the bird is launched from
+float launchPositionAdjusmentSpeed = 100.0f;
+float launchSpeed = 0.0f; //Speed of the bird when launched
+float launchAngle = 0.0f; //Angle of the bird when launched
+float spawnDrag = 0.0f;
+float spawnRadius = 10.0f;
 
 int main()
 {
     InitWindow(screenWidth, screenHeight, "Physics-1");
     SetTargetFPS(TARGET_FPS);
+
+
+    PhysicsBody target;
+    target.radius = 50;
+    target.position = { 900, (float)(screenHeight - 200) };
+    target.gravityScale = 0.0f;
+    sim.AddBody(target);
+
+    launchposition = { 30, (float)(screenHeight - 50) };
+
     while (!WindowShouldClose())
     {
         BeginDrawing();
-            ClearBackground(WHITE);
-            DrawText("Hello world!", 10, 10, 20, LIGHTGRAY);
+        ClearBackground(Color{ 0,100,166,255 });
+        //GUI
+        DrawRectangle(0, 0, 400, 200, Color{ 100,255,255,50 });
+        GuiSlider(Rectangle{ 100,0,100,20 }, "Launch Speed", TextFormat("%.2f", launchSpeed), &launchSpeed, 1, 1000);
+        GuiSlider(Rectangle{ 100,30,100,20 }, "Launch Angle", TextFormat("%.2f", launchAngle), &launchAngle, -90, 0);
+        GuiSlider(Rectangle{ 100,60,100,20 }, "Gravity", TextFormat("%.2f", sim.gravity.y), &sim.gravity.y, 500, 1000);
+        GuiSlider(Rectangle{ 100,90,100,20 }, "Drag", TextFormat("%.2f", spawnDrag), &spawnDrag, 0, 10);
+        GuiSlider(Rectangle{ 100,120,100,20 }, "Radius", TextFormat("%.2f", spawnRadius), &spawnRadius, 2, 50);
+
+        if (IsKeyDown(KEY_UP)) {
+            launchposition.y -= launchPositionAdjusmentSpeed * GetFrameTime();
+        }
+        if (IsKeyDown(KEY_DOWN)) {
+            launchposition.y += launchPositionAdjusmentSpeed * GetFrameTime();
+        }
+
+        Vector2 velocityPreview = { cosf(launchAngle * DEG2RAD) * launchSpeed, sinf(launchAngle * DEG2RAD) * launchSpeed }; // uses speed and angle
+
+        DrawCircleV(launchposition, 5, BROWN);
+        DrawLineEx(launchposition, launchposition + velocityPreview, 1, RED);
+
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            PhysicsBody birdToLaunch;
+            birdToLaunch.color = RED;
+            birdToLaunch.radius = 10;
+            birdToLaunch.position = launchposition;
+            birdToLaunch.velocity = velocityPreview;
+            birdToLaunch.drag = spawnDrag;
+            birdToLaunch.radius = spawnRadius;
+
+            sim.AddBody(birdToLaunch);
+        }
+
+        sim.Update();
+
+        //Draw the bird
+        //DrawCircleV(bird.position, 10, RED);
+        sim.Draw();
+
+        //GuiSliderBar(Rectangle{ 60, 5, 1000, 10 }, "Time", TextFormat("%.2f", time), &time, 0, 240);
+
 
         EndDrawing();
     }
