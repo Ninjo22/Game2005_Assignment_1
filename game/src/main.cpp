@@ -17,6 +17,11 @@ See documentation here: https://www.raylib.com/, and examples here: https://www.
 int screenWidth = 1200;
 int screenHeight = 800;
 
+Vector2 launchposition; //Start position of the parcel
+float launchSpeed = 120.0f; //Starting launch speed, vi in the assignment
+float launchAngle = 0.0f; //Starting launch angle, theta in the assignment
+float spawnRadius = 10.0f; //Here just for display, irrelevent to assignment
+
 const unsigned int TARGET_FPS = 50;
 
 class PhysicsBody {
@@ -24,7 +29,6 @@ public:
     Vector2 position = Vector2{ 0,0 };
     Vector2 velocity = Vector2{ 0,0 };
     float mass = 1.0f;
-    float drag = 0.0f;
     float gravityScale = 1.0f;
     Color color = YELLOW;
     float radius = 10.0f;
@@ -74,7 +78,7 @@ public:
             bodies[i].velocity += gravity * bodies[i].gravityScale * FIXED_DELTA_TIME;
 
             //Apply drag to counteract velocity 
-            bodies[i].velocity *= 1.0f - (bodies[i].drag * FIXED_DELTA_TIME);
+            bodies[i].velocity *= 1.0f - FIXED_DELTA_TIME;
 
         }
 
@@ -101,13 +105,6 @@ public:
 //PhysicsBody bird;
 PhysicsSimulation sim;
 
-Vector2 launchposition; //where the bird is launched from
-float launchPositionAdjusmentSpeed = 100.0f;
-float launchSpeed = 0.0f; //Speed of the bird when launched
-float launchAngle = 0.0f; //Angle of the bird when launched
-float spawnDrag = 0.0f;
-float spawnRadius = 10.0f;
-
 int main()
 {
     InitWindow(screenWidth, screenHeight, "Physics-1");
@@ -127,20 +124,9 @@ int main()
         BeginDrawing();
         ClearBackground(Color{ 0,100,166,255 });
         //GUI
-        DrawRectangle(0, 0, 400, 200, Color{ 100,255,255,50 });
-        GuiSlider(Rectangle{ 100,0,100,20 }, "Launch Speed", TextFormat("%.2f", launchSpeed), &launchSpeed, 1, 1000);
-        GuiSlider(Rectangle{ 100,30,100,20 }, "Launch Angle", TextFormat("%.2f", launchAngle), &launchAngle, -90, 0);
-        GuiSlider(Rectangle{ 100,60,100,20 }, "Gravity", TextFormat("%.2f", sim.gravity.y), &sim.gravity.y, 500, 1000);
-        GuiSlider(Rectangle{ 100,90,100,20 }, "Drag", TextFormat("%.2f", spawnDrag), &spawnDrag, 0, 10);
-        GuiSlider(Rectangle{ 100,120,100,20 }, "Radius", TextFormat("%.2f", spawnRadius), &spawnRadius, 2, 50);
-
-        if (IsKeyDown(KEY_UP)) {
-            launchposition.y -= launchPositionAdjusmentSpeed * GetFrameTime();
-        }
-        if (IsKeyDown(KEY_DOWN)) {
-            launchposition.y += launchPositionAdjusmentSpeed * GetFrameTime();
-        }
-
+        DrawRectangle(0, 0, 400, 200, Color{ 100,255,255,50});
+        
+        
         Vector2 velocityPreview = { cosf(launchAngle * DEG2RAD) * launchSpeed, sinf(launchAngle * DEG2RAD) * launchSpeed }; // uses speed and angle
 
         DrawCircleV(launchposition, 5, BROWN);
@@ -153,7 +139,6 @@ int main()
             birdToLaunch.radius = 10;
             birdToLaunch.position = launchposition;
             birdToLaunch.velocity = velocityPreview;
-            birdToLaunch.drag = spawnDrag;
             birdToLaunch.radius = spawnRadius;
 
             sim.AddBody(birdToLaunch);
